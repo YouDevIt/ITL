@@ -1,8 +1,6 @@
 # ITL Language Manual
 
-**ITL (Incredibly Tiny Language)** is a minimalist interpreted language inspired by VTL-2 (Very Tiny Language 2, developed by Gary Shannon and Frank McCoy in 1976). Every line of source code is a statement. There are no keywords; meaning is entirely determined by the leading character of each line and by punctuation inside expressions.
-
-**Philosophy of the language:** every program line is an assignment to a system or user variable. The `=` assignment operator between the variable and the expression is usually omitted.
+**ITL (Incredibly Tiny Language)** is a minimalist interpreted language inspired by VTL‑2 (Very Tiny Language 2, developed by Gary Shannon and Frank McCoy in 1976). Each line of source code is a statement. There are no keywords, because meaning is determined entirely by the line’s leading character and by the punctuation used within expressions. In fact, every program line is an assignment to either a system or a user variable. The `=` assignment operator between the variable and the expression is usually omitted, and whitespace characters are ignored.
 
 ---
 
@@ -48,8 +46,6 @@ becomes three lines internally:
 3: ? = A+B+"\n"
 ```
 
-Blank lines are stored but silently skipped during execution.
-
 ---
 
 ## 2. Variables
@@ -58,13 +54,9 @@ ITL has **27 single-letter variables**: `A` through `Z` (uppercase only) and the
 
 Variables are dynamically typed: they hold either a **number** (double-precision float) or a **string** at any given moment.
 
-A variable that has never been assigned is *undefined*. Using an undefined variable returns `0` numerically or `"0"` as a string. If an undefined variable is read for the first time, the interpreter performs a *forward reference scan*: it scans the remaining program lines to see if the variable is assigned there and, if so, executes that assignment first.
+A variable that has never been assigned is *undefined*. If an undefined variable is read for the first time, the interpreter performs a *forward reference scan*: it scans the remaining program lines to see if the variable is assigned there and, if so, executes that assignment first. If no assignment is found, an undefined variable returns `0` numerically or `"0"` as a string.
 
-To explicitly set a variable back to *undefined*, write its name alone on a line:
-
-```
-A
-```
+To explicitly set a variable back to *undefined*, write its name alone on a line.
 
 ---
 
@@ -109,7 +101,7 @@ Expressions are evaluated **left-to-right** with no operator precedence (use par
 - A unary minus: `-A`, `-3`
 - A logical NOT: `!A` (returns 1 if A is 0, else 0)
 - A binary operation: `A+B`, `X*2`, `N<10`
-- A function call: `sin(A)`, `gotoxy(10,5)`
+- A system function call: `sin(A)`, `gotoxy(10,5)`
 - A parenthesis block: `(A=1; B=A+1; B)` (see §15)
 - Type conversion: `$A` (see §16)
 - Random number: `'`
@@ -193,7 +185,7 @@ A
 
 ## 7. Print statement
 
-A line beginning with `?` followed by an expression prints the expression:
+A line beginning with `?` followed by an expression (or by `=` and an expression) prints the expression:
 
 ```
 ?"Hello, World!\n"
@@ -241,23 +233,25 @@ The special variable `#` holds the **current line number**. Assigning to `#` is 
 
 ```
 #=10          (* unconditional jump to line 10 *)
-#=N*0         (* jump to line 0 = stop execution *)
+#=N*0         (* no jump, continue execution *)
 ```
 
 **Conditional jump** – multiply the target line by the condition (1 or 0):
 
 ```
-#=(N<10)*#    (* stay on current line while N < 10; when N >= 10 jump to 0 *)
+#=(N<10)*25
 ```
 
-A jump to line `0` (or any value ≤ 0) terminates execution. A jump to a line beyond the last line also terminates.
+The line above executes a jump to line 25 while N < 10; when N >= 10 continues the execution with no jump.
+
+A jump to a negative line terminates execution. A jump to a line beyond the last line also terminates.
 
 #### Subroutine pattern
 
 Since there are no `GOSUB`/`RETURN` statements, subroutines can be simulated using a return-address variable:
 
 ```
-R=5; #=20      (* call subroutine at line 20, return to line 5 *)
+R=#+1; #=20    (* call subroutine at line 20, return to the line that follows here *)
 ...            (* line 5: continuation *)
 
 (* --- subroutine at line 20 --- *)
@@ -282,25 +276,23 @@ Accessing an index beyond the current array size returns `0`.
 ### Writing
 
 ```
-3@5 = 99        (* write 99 to element 5 *)
-0@N = X         (* write X to element N, using 0 as dummy base *)
+3@ = 99        (* write 99 to element 3 *)
+N@ = X         (* write X to element N, using 0 as dummy base *)
 ```
 
 The general syntax for an array write is:
 
 ```
-base@index = value
+index@ = value
 ```
 
-The `base` value is parsed but ignored in the current implementation; use `0` or any number as a placeholder. The key part is `@index`.
-
-Array indices are zero-based integers. Negative indices are clamped to 0. The maximum size is `MAX_ARRAY_SIZE` (1 000 000 elements).
+Array indices are zero-based integers. Negative indices are clamped to 0. The maximum size is `MAX_ARRAY_SIZE` (1 000 000 elements in the current implementation).
 
 ---
 
 ## 11. Math functions
 
-Functions are called with a lowercase name followed by parenthesised arguments. Multiple arguments are comma-separated.
+System functions are called with a lowercase name followed by parenthesised arguments. Multiple arguments are comma-separated.
 
 ### Trigonometric
 
@@ -374,12 +366,12 @@ Both foreground and background accept a color number 0–7:
 | Code | Color |
 |------|-------|
 | 0 | Black |
-| 1 | Red |
+| 1 | Blue |
 | 2 | Green |
-| 3 | Yellow |
-| 4 | Blue |
+| 3 | Cyan |
+| 4 | Red |
 | 5 | Magenta |
-| 6 | Cyan |
+| 6 | Yellow |
 | 7 | White |
 
 ### Attribute codes (setattr)
@@ -610,7 +602,7 @@ B=_
 #=(A<1000)*3
 ```
 
-### Simple animation (requires PDCurses)
+### Simple animation (press a key to move the *)
 
 ```
 clear()
@@ -621,7 +613,8 @@ putch(42)
 gotoxy(X-1,10)
 putch(32)
 X+1
-#=(X<getw())*2
+#:=0*#
+#=(X<getw())*4
 ```
 
 ### Colored text banner
@@ -650,17 +643,18 @@ N=?
 ### Random walk
 
 ```
-clear()
-X=getw()/2
-Y=geth()/2
+clear
+Xgetw/2
+Ygeth/2
 setfore(3)
 gotoxy(X,Y)
+putch(32)
+Dfloor('*4)
+X+(D=0)-(D=1)
+Y+(D=2)-(D=3)
+Xmax(1,min(X,getw-2))
+Ymax(1,min(Y,geth-2))
+gotoxy(X,Y)
 putch(42)
-D='*4
-X=X+(D=0)-(D=1)
-Y=Y+(D=2)-(D=3)
-X=X*(X>0)*(X<getw()-1)+1*(X<1)+(getw()-2)*(X>getw()-2)
-Y=Y*(Y>0)*(Y<geth()-1)+1*(Y<1)+(geth()-2)*(Y>geth()-2)
-#=(K=0)*5
-K=:
+#:=0*5
 ```
