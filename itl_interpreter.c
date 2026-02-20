@@ -1512,10 +1512,12 @@ void print_repl_help(void) {
     printw("ITL REPL - Special commands:\n");
     printw("  :help         - Show this help\n");
     printw("  :vars         - Show all defined variables\n");
+    printw("  :clear        - Clear all variables\n");
     printw("  :array        - Show array contents\n");
     printw("  :lines        - Show program lines\n");
+    printw("  :syntax       - Show syntax help\n");
+    printw("  :screen       - Show screen functions help\n");
     printw("  :debug VAR    - Show raw bytes of a variable (e.g. :debug A or :debug _)\n");
-    printw("  :clear        - Clear all variables\n");
     printw("  :reset        - Reset the REPL completely (clears everything)\n");
     printw("  :exit/:quit   - Exit the REPL\n");
     printw("\n");
